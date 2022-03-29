@@ -17,6 +17,7 @@ def get_interfaces():
     return interfaces
 
 def process_payload(packet):
+    # DNS RCODEs ref.: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
     rcode_def = {
         0: 'NoError',
         1: 'FormErr',
@@ -24,6 +25,20 @@ def process_payload(packet):
         3: 'NXDomain',
         4: 'NotImp',
         5: 'Refesed',
+        6: 'YXDomain',
+        7: 'YXRRSet',
+        8: 'NXRRSet',
+        9: 'NotAuth',
+        10: 'NotZone',
+        11: 'DSOTYPENI',
+        16: 'BADVERS / BADSIG',
+        17: 'BADKEY',
+        18: 'BADTIME',
+        19: 'BADMODE',
+        20: 'BADNAME',
+        21: 'BADALG',
+        22: 'BADTRUNC',
+        23: 'BADCOOKIE',
     }
 
     # DNS type ref.: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-4
