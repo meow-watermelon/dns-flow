@@ -2,7 +2,7 @@
 
 ## Intro
 
-DNS Flow Monitor is a simple utility to print DNS query / response flows in real time. The utility is capturing UDP DNS traffic by default. User can press `Ctrl-C` to stop the utility running.
+DNS Flow Monitor is a simple utility to print DNS query / response flows in real time. The utility can capture both UDP and TCP DNS traffic. User can press `Ctrl-C` to stop the utility running.
 
 ## Python Module Dependencies
 
@@ -20,26 +20,25 @@ time
 
 ```
 $ ./dns-flow.py -h
-usage: dns-flow.py [-h] --interface INTERFACE [--protocol PROTOCOL]
+usage: dns-flow.py [-h] --interface INTERFACE
 
 DNS Flow Monitor - Scapy Version
 
 options:
   -h, --help            show this help message and exit
   --interface INTERFACE
-                        Interface used to capture DNS traffic (interfaces: ['lo', 'enp0s31f6', 'wlp0s20f3', 'virbr0'])
-  --protocol PROTOCOL   Protocol(udp/tcp) used to capture DNS traffic (default: udp) TODO: add capability to capture DNS responses over TCP
+                        Interface used to capture DNS traffic (interfaces: ['lo', 'enp0s31f6', 'wlp0s20f3', 'virbr0', 'docker0', 'vethe23e7b2', 'veth9d65807'])
 
 ===== OUTPUT FORMAT =====
 
 QUERY:
-[UTC TIMESTAMP] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
+[UTC TIMESTAMP] [PROTOCOL] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
 
 RESPONSE (RCODE == 0):
-[UTC TIMESTAMP] RESPONSE [Tx ID] [RCODE TEXT] [RESPONSE RR NAME] [RESPONSE RR TYPE TEXT] [RESPONSE RR TTL] [RESPONSE RESOURCE DATA]
+[UTC TIMESTAMP] [PROTOCOL] RESPONSE [Tx ID] [RCODE TEXT] [RESPONSE RR NAME] [RESPONSE RR TYPE TEXT] [RESPONSE RR TTL] [RESPONSE RESOURCE DATA]
     
 RESPONSE (RCODE != 0):
-[UTC TIMESTAMP] RESPONSE [Tx ID] [RCODE TEXT]
+[UTC TIMESTAMP] [PROTOCOL] RESPONSE [Tx ID] [RCODE TEXT]
 ```
 
 ## Output Format
@@ -49,16 +48,17 @@ Every DNS traffic transaction will be printed in one line. Each field is separat
 ### QUERY Traffic Output Format
 
 ```
-[UTC TIMESTAMP] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
+[UTC TIMESTAMP] [PROTOCOL] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
 
 Example:
 
-Sun, 27 Mar 2022 16:50:41 +0000 QUERY   50195   NoError quantcast584928381.s.moatpixel.com.     AAAA
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	QUERY	8679	NoError	www.pinterest.com.	A
 ```
 
 | Field Name | Description |
 | --- | --- |
 | UTC TIMESTAMP | UTC timestamp |
+| PROTOCOL | UDP or TCP |
 | Tx ID | Transaction ID |
 | RCODE TEXT | Response Code text |
 | QUERY NAME | Query Name |
@@ -69,16 +69,17 @@ Sun, 27 Mar 2022 16:50:41 +0000 QUERY   50195   NoError quantcast584928381.s.moa
 #### RCODE == 0
 
 ```
-[UTC TIMESTAMP] RESPONSE [Tx ID] [RCODE TEXT] [RESPONSE RR NAME] [RESPONSE RR TYPE TEXT] [RESPONSE RR TTL] [RESPONSE RESOURCE DATA]
+[UTC TIMESTAMP] [PROTOCOL] RESPONSE [Tx ID] [RCODE TEXT] [RESPONSE RR NAME] [RESPONSE RR TYPE TEXT] [RESPONSE RR TTL] [RESPONSE RESOURCE DATA]
 
 Example:
 
-Mon, 28 Mar 2022 01:51:51 +0000 RESPONSE        58622   NoError fedoraproject.org.      AAAA    42      2605:bc80:3010:600:dead:beef:cafe:fed9
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www.pinterest.com.	CNAME	3358	www-pinterest-com.gslb.pinterest.com.
 ```
 
 | Field Name | Description |
 | --- | --- |
 | UTC TIMESTAMP | UTC timestamp |
+| PROTOCOL | UDP or TCP |
 | Tx ID | Transaction ID |
 | RCODE TEXT | Response Code text |
 | RESPONSE RR NAME | Resource Record Name of DNS Response |
@@ -91,16 +92,17 @@ Please note that some responses from particular RR types(e.g. SRV) might not hav
 #### RCODE != 0
 
 ```
-[UTC TIMESTAMP] RESPONSE [Tx ID] [RCODE TEXT]
+[UTC TIMESTAMP] [PROTOCOL] RESPONSE [Tx ID] [RCODE TEXT]
 
 Example:
 
-Sun, 27 Mar 2022 16:58:50 +0000 RESPONSE        36213   NXDomain
+Mon, 04 Apr 2022 05:25:22 +0000	UDP	RESPONSE	30045	NXDomain
 ```
 
 | Field Name | Description |
 | --- | --- |
 | UTC TIMESTAMP | UTC timestamp |
+| PROTOCOL | UDP or TCP |
 | Tx ID | Transaction ID |
 | RCODE TEXT | Response Code text |
 
@@ -108,36 +110,33 @@ Sun, 27 Mar 2022 16:58:50 +0000 RESPONSE        36213   NXDomain
 
 ```
 $ sudo ./dns-flow.py --interface wlp0s20f3
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	10928	NoError	play.google.com.	AAAA
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	51439	NoError	play.google.com.	A
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	34673	NoError	play.google.com.	AAAA
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	34673	NoError	play.google.com.	AAAA	192	2607:f8b0:4002:806::200e
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	10928	NoError	play.google.com.	AAAA	192	2607:f8b0:4002:806::200e
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.102
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.113
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.100
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.139
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.101
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	51439	NoError	play.google.com.	A	149	74.125.21.138
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	44781	NoError	mail.yahoo.com.	A
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	59557	NoError	mail.yahoo.com.	AAAA
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	23767	NoError	mail.yahoo.com.	A
-Mon, 28 Mar 2022 04:01:21 +0000	QUERY	27461	NoError	mail.yahoo.com.	AAAA
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	44781	NoError	mail.yahoo.com.	CNAME	191	edge.gycpi.b.yahoodns.net.
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	44781	NoError	edge.gycpi.b.yahoodns.net.	A	12	69.147.88.7
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	44781	NoError	edge.gycpi.b.yahoodns.net.	A	12	69.147.88.8
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	23767	NoError	mail.yahoo.com.	CNAME	191	edge.gycpi.b.yahoodns.net.
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	23767	NoError	edge.gycpi.b.yahoodns.net.	A	12	69.147.88.8
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	23767	NoError	edge.gycpi.b.yahoodns.net.	A	12	69.147.88.7
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	27461	NoError	mail.yahoo.com.	CNAME	171	edge.gycpi.b.yahoodns.net.
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	27461	NoError	edge.gycpi.b.yahoodns.net.	AAAA	11	2001:4998:18:800::4003
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	27461	NoError	edge.gycpi.b.yahoodns.net.	AAAA	11	2001:4998:18:800::4002
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	59557	NoError	mail.yahoo.com.	CNAME	171	edge.gycpi.b.yahoodns.net.
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	59557	NoError	edge.gycpi.b.yahoodns.net.	AAAA	11	2001:4998:18:800::4003
-Mon, 28 Mar 2022 04:01:21 +0000	RESPONSE	59557	NoError	edge.gycpi.b.yahoodns.net.	AAAA	11	2001:4998:18:800::4002
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	QUERY	55525	NoError	slack.com.	AAAA
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	QUERY	43350	NoError	slack.com.	A
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	QUERY	28481	NoError	slack.com.	A
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	QUERY	15671	NoError	slack.com.	AAAA
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	44.237.180.172
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	52.89.90.67
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	44.234.235.93
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	35.82.91.193
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	54.245.50.245
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	54.71.95.193
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	54.70.179.16
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	54.188.33.22
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	28481	NoError	slack.com.	A	15	35.81.85.251
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	54.188.33.22
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	44.237.180.172
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	54.245.50.245
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	35.82.91.193
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	44.234.235.93
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	54.70.179.16
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	35.81.85.251
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	54.71.95.193
+Mon, 04 Apr 2022 05:22:53 +0000	UDP	RESPONSE	43350	NoError	slack.com.	A	15	52.89.90.67
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	QUERY	8679	NoError	www.pinterest.com.	A
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www.pinterest.com.	CNAME	3358	www-pinterest-com.gslb.pinterest.com.
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www-pinterest-com.gslb.pinterest.com.	CNAME	203	www.gslb.pinterest.net.
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www.gslb.pinterest.net.	CNAME	34	www.pinterest.com.edgekey.net.
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www.pinterest.com.edgekey.net.	CNAME	5273	e6449.a.akamaiedge.net.
+Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	e6449.a.akamaiedge.net.	A	20	104.86.184.250
 ...
 ```
-
-## Notes
-
-1. This utility cannot parse responses that are using DNS over TCP. This feature will be added later.
