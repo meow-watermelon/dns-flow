@@ -2,7 +2,19 @@
 
 import argparse
 import os
-from scapy.all import get_working_ifaces, sniff, DNS, DNSQR, DNSRR, TCP, UDP
+from scapy.all import (
+    get_working_ifaces,
+    hexdump,
+    raw,
+    sniff,
+    DNS,
+    DNSQR,
+    DNSRR,
+    Ether,
+    IP,
+    TCP,
+    UDP,
+)
 import sys
 import time
 
@@ -18,7 +30,30 @@ def get_interfaces():
     return interfaces
 
 
-def process_payload(packet):
+def is_mdns(packet):
+    # ipv4: 01:00:5e:00:00:fb
+    # ipv6: 33:33:00:00:00:fb
+    packet_mac_dst = packet[Ether].getfieldval("dst")
+
+    if packet_mac_dst == "01:00:5e:00:00:fb" or packet_mac_dst == "33:33:00:00:00:fb":
+        return True
+    else:
+        return False
+
+
+def display_packet_info(packet):
+    print("##### Raw Packet Bytes #####")
+    print(raw(packet))
+    print()
+    packet.show()
+    print()
+    print(hexdump(packet))
+    print()
+    print(packet.command())
+    print()
+
+
+def process_payload(packet, *, debug=False):
     # DNS RCODEs ref.: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
     rcode_def = {
         0: "NoError",
@@ -130,6 +165,14 @@ def process_payload(packet):
     }
 
     if packet.haslayer(DNS):
+        # skip if packet uses mDNS
+        if is_mdns(packet):
+            return None
+
+        # display raw packet details if debug flag is True
+        if debug:
+            display_packet_info(packet)
+
         # determine if DNS upper layer is UDP or TCP
         global dns_upper_layer
         if packet.haslayer(UDP):
@@ -219,6 +262,12 @@ RESPONSE (RCODE != 0):
         required=True,
         help=f"Interface used to capture DNS traffic (interfaces: {interfaces})",
     )
+    parser.add_argument(
+        "--debug",
+        required=False,
+        action="store_true",
+        help="Display raw packet details",
+    )
     args = parser.parse_args()
 
     # scapy needs superuser permission to capture packets. check EUID and exit if it's not root user
@@ -233,4 +282,4 @@ RESPONSE (RCODE != 0):
         sys.exit(3)
 
     # start sniffing DNS traffic
-    sniff(iface=args.interface, lfilter=lambda p: process_payload(p))
+    sniff(iface=args.interface, lfilter=lambda p: process_payload(p, debug=args.debug))
