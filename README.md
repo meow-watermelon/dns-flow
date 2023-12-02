@@ -2,7 +2,9 @@
 
 ## Intro
 
-DNS Flow Monitor is a simple utility to print DNS query / response flows in real time. The utility can capture both UDP and TCP DNS traffic. User can press `Ctrl-C` to stop the utility running.
+DNS Flow Monitor is a simple utility to print DNS query / response flows in real time. The utility can capture both UDP and TCP DNS traffic. User can press `Ctrl-C` to stop the utility running. User can also check packet details by using `--debug` option.
+
+The utility DOES NOT show mDNS traffic.
 
 ## Python Module Dependencies
 
@@ -20,16 +22,17 @@ time
 
 ```
 $ ./dns-flow.py -h
-usage: dns-flow.py [-h] --interface INTERFACE
+usage: dns-flow.py [-h] --interface INTERFACE [--debug]
 
 DNS Flow Monitor - Scapy Version
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --interface INTERFACE
-                        Interface used to capture DNS traffic (interfaces: ['lo', 'enp0s31f6', 'wlp0s20f3', 'virbr0', 'docker0', 'vethe23e7b2', 'veth9d65807'])
+                        Interface used to capture DNS traffic (interfaces: ['lo', 'eth0'])
+  --debug               Display raw packet details
 
-===== OUTPUT FORMAT =====
+===== OUTPUT FORMAT (without debug flag) =====
 
 QUERY:
 [UTC TIMESTAMP] [PROTOCOL] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
@@ -140,3 +143,5 @@ Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	www.pinterest.com.edge
 Mon, 04 Apr 2022 05:23:00 +0000	UDP	RESPONSE	8679	NoError	e6449.a.akamaiedge.net.	A	20	104.86.184.250
 ...
 ```
+
+If `--debug` option is enabled, a detailed packet information block will be displayed above the normal traffic flow message line.
