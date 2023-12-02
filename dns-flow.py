@@ -3,7 +3,7 @@
 import argparse
 import os
 from scapy.all import (
-    get_working_ifaces,
+    get_if_list,
     hexdump,
     raw,
     sniff,
@@ -11,23 +11,11 @@ from scapy.all import (
     DNSQR,
     DNSRR,
     Ether,
-    IP,
     TCP,
     UDP,
 )
 import sys
 import time
-
-
-def get_interfaces():
-    interfaces = []
-
-    for interface in get_working_ifaces():
-        if_name = interface.name
-
-        interfaces.append(if_name)
-
-    return interfaces
 
 
 def is_mdns(packet):
@@ -235,11 +223,11 @@ def process_payload(packet, *, debug=False):
 
 
 if __name__ == "__main__":
-    interfaces = get_interfaces()
+    interfaces = get_if_list()
 
     # set up command arguments
     epilog = """
-===== OUTPUT FORMAT =====
+===== OUTPUT FORMAT (without debug flag) =====
 
 QUERY:
 [UTC TIMESTAMP] [PROTOCOL] QUERY [Tx ID] [RCODE TEXT] [QUERY NAME] [QUERY TYPE TEXT]
